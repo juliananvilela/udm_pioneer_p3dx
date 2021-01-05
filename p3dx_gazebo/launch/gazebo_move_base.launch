@@ -1,0 +1,54 @@
+<launch>
+
+	<!-- these are the arguments you can pass this launch file, for example 
+		paused:=true -->
+	<arg name="paused" default="false" />
+	<arg name="use_sim_time" default="true" />
+	<arg name="gui" default="true" />
+	<arg name="headless" default="false" />
+	<arg name="debug" default="false" />
+
+	<!-- We resume the logic in empty_world.launch, changing only the name of 
+		the world to be launched -->
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+		<arg name="world_name" value="$(find p3dx_gazebo)/worlds/group3_world_1.world" />
+		<arg name="debug" value="$(arg debug)" />
+		<arg name="gui" value="$(arg gui)" />
+		<arg name="paused" value="$(arg paused)" />
+		<arg name="use_sim_time" value="$(arg use_sim_time)" />
+		<arg name="headless" value="$(arg headless)" />
+	</include>
+
+
+
+	<!-- Load the URDF into the ROS Parameter Server -->
+	<param name="robot_description"
+		command="$(find xacro)/xacro.py '$(find p3dx_description)/urdf/pioneer3dx.xacro'" />
+
+	<!-- Run a python script to the send a service call to gazebo_ros to spawn 
+		a URDF robot -->
+	<node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
+		respawn="false" output="screen" args="-urdf -model p3dx -param robot_description" />
+
+	<!-- ros_control p3rd launch file -->
+	<include file="$(find p3dx_control)/launch/control.launch" />
+
+   <!-- Run the map server -->
+   <node name="map_server" pkg="map_server" type="map_server" args="$(find p3dx_navigation)/maps/group3_map_project_1.yaml" output="screen"/>
+  
+   <!--- Run AMCL -->
+   <include file="$(find p3dx_navigation)/launch/amcl_diff_gazebo.launch" />
+
+   <!--<node name="amcl" pkg="amcl" type="amcl" output="screen"/>-->
+  
+   <!--- Run move_base with parameters -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find p3dx_navigation)/config/p3dx_gazebo/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find p3dx_navigation)/config/p3dx_gazebo/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find p3dx_navigation)/config/p3dx_gazebo/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find p3dx_navigation)/config/p3dx_gazebo/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find p3dx_navigation)/config/p3dx_gazebo/move_base_params.yaml" command="load" />
+  </node>
+
+</launch>
+

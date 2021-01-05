@@ -1,0 +1,17 @@
+<launch>
+<param name="/use_sim_time" value="true" />
+	  <!-- Run the map server -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find p3dx_gazebo)/worlds/world1_map.yaml" >
+    <param name="frame_id" value="/map" />
+  </node>
+  <!--- Run AMCL -->
+  <include file="$(find p3dx_gazebo)/launch/amcl_robot1.launch" />
+<include file="$(find p3dx_gazebo)/launch/amcl_robot2.launch" />
+
+
+  <include file="$(find p3dx_gazebo)/launch/move_base_robot1.launch" />
+<include file="$(find p3dx_gazebo)/launch/move_base_robot2.launch" />
+
+
+
+</launch>
